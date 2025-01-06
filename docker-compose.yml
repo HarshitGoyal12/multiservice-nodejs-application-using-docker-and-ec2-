@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: blogdb
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - blog-network
+
+  user-service:
+    build: ./user-service
+    environment:
+      - PORT=3000
+      - DATABASE_URL=postgresql://user:password@db:5432/blogdb?currentSchema=users
+      - JWT_SECRET=your_jwt_secret
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    networks:
+      - blog-network
+
+  blog-service:
+    build: ./blog-service
+    environment:
+      - PORT=3001
+      - DATABASE_URL=postgresql://user:password@db:5432/blogdb?currentSchema=blogs
+      - JWT_SECRET=your_jwt_secret
+    ports:
+      - "3001:3001"
+    depends_on:
+      - db
+    networks:
+      - blog-network
+
+  comment-service:
+    build: ./comment-service
+    environment:
+      - PORT=3002
+      - DATABASE_URL=postgresql://user:password@db:5432/blogdb?currentSchema=comments
+      - JWT_SECRET=your_jwt_secret
+    ports:
+      - "3002:3002"
+    depends_on:
+      - db
+    networks:
+      - blog-network
+
+volumes:
+  db-data:
+
+networks:
+  blog-network:
+    driver: bridge
